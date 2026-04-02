@@ -18,6 +18,7 @@ type Config struct {
 
 	Grafana struct {
 		Address string `yaml:"address"`
+		PathPrefix string `yaml:"path_prefix"`
 		ApiKey  string `yaml:"api_key"`
 	} `yaml:"grafana"`
 

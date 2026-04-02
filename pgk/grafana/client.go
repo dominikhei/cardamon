@@ -8,6 +8,7 @@ import (
 
 type Client struct {
 	URL    string
+	PathPrefix string
 	APIKey string
 	Client *http.Client
 }
@@ -17,16 +18,17 @@ type DashboardMetadata struct {
 	Title string `json:"title"`
 }
 
-func NewClient(url, apiKey string) *Client {
+func NewClient(url, pathPrefix string, apiKey string) *Client {
 	return &Client{
 		URL:    url,
+		PathPrefix: pathPrefix,
 		APIKey: apiKey,
 		Client: &http.Client{},
 	}
 }
 
 func (c *Client) newRequest(method, path string) (*http.Request, error) {
-	req, err := http.NewRequest(method, c.URL+path, nil)
+	req, err := http.NewRequest(method, c.URL+c.PathPrefix+path, nil)
 	if err != nil {
 		return nil, err
 	}
