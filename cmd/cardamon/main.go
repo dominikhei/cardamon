@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -67,31 +66,12 @@ func main() {
 	}
 	allMetrics = promAnalyzer.FilterMetrics(allMetrics, cfg.Audit.ExcludePrefixes)
 	ghosts := engine.IdentifyGhosts(allMetrics, grafanaUsed, rulesUsed, logsUsed)
-	fmt.Println("\n--- AUDIT SUMMARY ---")
-	fmt.Printf("✅ Total Active Metrics:    %d\n", len(allMetrics))
-	fmt.Printf("👻 Total Ghost Metrics:     %d\n", len(ghosts))
-
-	if len(allMetrics) > 0 {
-		efficiency := float64(len(allMetrics)-len(ghosts)) / float64(len(allMetrics)) * 100
-		fmt.Printf("📈 Utilization Score:      %.2f%%\n", efficiency)
-	}
-
-	fmt.Println("📊 Fetching stats for ghost metrics...")
 	ghostReports, err :=  promAnalyzer.GetGhostStats(ctx, ghosts)
 	if err != nil {
-		log.Fatalf("❌ Failed to fetch ghost stats: %v", err)
+		log.Fatalf("Failed to fetch ghost stats: %v", err)
 	}
 
-	// Save to JSON
-	data, err := json.MarshalIndent(ghostReports, "", "  ")
-	if err != nil {
-		log.Fatalf("❌ Failed to marshal report: %v", err)
-	}
-	err = os.WriteFile("test.json", data, 0644)
-	if err != nil {
-		log.Fatalf("❌ Failed to write report: %v", err)
-	}
-	fmt.Printf("\n💾 Report saved")
+
 
 	apiGhosts := make([]server.GhostMetric, 0, len(ghostReports))
 	for _, g := range ghostReports {
@@ -103,7 +83,8 @@ func main() {
 			InactiveDuration: g.InactiveDuration,
 		})
 	}
+	addr := fmt.Sprintf(":%d", cfg.Dashboard.Port)
 	srv := server.New(apiGhosts)
-	log.Fatal(srv.ListenAndServe(":8080"))
+	log.Fatal(srv.ListenAndServe(addr))
 
 }

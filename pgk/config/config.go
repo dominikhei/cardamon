@@ -26,6 +26,10 @@ type Config struct {
 	Audit struct {
         ExcludePrefixes []string `yaml:"exclude_prefixes"`
     } `yaml:"audit"`
+
+	Dashboard struct {
+		Port int `yaml:"port"`
+	} `yaml:"dashboard"`
 }
 
 func LoadConfig(path string) (*Config, error) {
