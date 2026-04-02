@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"github.com/dominikhei/cardamon/pgk/engine"
 	"github.com/dominikhei/cardamon/pgk/grafana"
 	"github.com/dominikhei/cardamon/pgk/prom"
+	"github.com/dominikhei/cardamon/pgk/server"
 )
 
 func main() {
@@ -24,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	promClient, err := prom.NewClient(cfg.Prometheus.Address)
+	promClient, err := prom.NewClient(cfg.Prometheus.Address + cfg.Prometheus.PathPrefix)
 	if err != nil {
 		log.Fatalf("Failed to initialize Prometheus client: %v", err)
 	}
@@ -63,9 +65,8 @@ func main() {
 			fmt.Printf("Warning: Log scan failed: %v\n", err)
 		}
 	}
-
+	allMetrics = promAnalyzer.FilterMetrics(allMetrics, cfg.Audit.ExcludePrefixes)
 	ghosts := engine.IdentifyGhosts(allMetrics, grafanaUsed, rulesUsed, logsUsed)
-
 	fmt.Println("\n--- AUDIT SUMMARY ---")
 	fmt.Printf("✅ Total Active Metrics:    %d\n", len(allMetrics))
 	fmt.Printf("👻 Total Ghost Metrics:     %d\n", len(ghosts))
@@ -74,5 +75,35 @@ func main() {
 		efficiency := float64(len(allMetrics)-len(ghosts)) / float64(len(allMetrics)) * 100
 		fmt.Printf("📈 Utilization Score:      %.2f%%\n", efficiency)
 	}
-	
+
+	fmt.Println("📊 Fetching stats for ghost metrics...")
+	ghostReports, err :=  promAnalyzer.GetGhostStats(ctx, ghosts)
+	if err != nil {
+		log.Fatalf("❌ Failed to fetch ghost stats: %v", err)
+	}
+
+	// Save to JSON
+	data, err := json.MarshalIndent(ghostReports, "", "  ")
+	if err != nil {
+		log.Fatalf("❌ Failed to marshal report: %v", err)
+	}
+	err = os.WriteFile("test.json", data, 0644)
+	if err != nil {
+		log.Fatalf("❌ Failed to write report: %v", err)
+	}
+	fmt.Printf("\n💾 Report saved")
+
+	apiGhosts := make([]server.GhostMetric, 0, len(ghostReports))
+	for _, g := range ghostReports {
+		apiGhosts = append(apiGhosts, server.GhostMetric{
+			Name:             g.Name,
+			Job:              g.Job,
+			SeriesCount:      g.SeriesCount,
+			LabelCount:       g.LabelCount,
+			InactiveDuration: g.InactiveDuration,
+		})
+	}
+	srv := server.New(apiGhosts)
+	log.Fatal(srv.ListenAndServe(":8080"))
+
 }

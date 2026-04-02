@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cardamon</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --surface: rgba(255,255,255,0.72);
+    --surface-solid: #ffffff;
+    --border: rgba(0,0,0,0.08);
+    --border-strong: rgba(0,0,0,0.14);
+    --text: #1d1d1f;
+    --text-2: #6e6e73;
+    --text-3: #aeaeb2;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --danger: #ff3b30;
+    --warning: #ff9500;
+    --green: #34c759;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --surface: rgba(44,44,46,0.72);
+      --surface-solid: #2c2c2e;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text: #f5f5f7;
+      --text-2: #98989d;
+      --text-3: #636366;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar { width: 232px; flex-shrink: 0; background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-right: 0.5px solid var(--border); padding: 0; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 20px 18px 16px; border-bottom: 0.5px solid var(--border); }
+  .logo-mark { font-size: 14px; font-weight: 500; color: var(--text); letter-spacing: -0.01em; }
+  .logo-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+  .sidebar-section { padding: 14px 10px 6px; }
+  .sidebar-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); padding: 0 8px; margin-bottom: 4px; }
+  .filter-group { display: flex; flex-direction: column; gap: 1px; }
+  .filter-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: var(--radius-xs); cursor: pointer; transition: background 0.12s; font-size: 12px; color: var(--text-2); border: none; background: none; width: 100%; text-align: left; font-family: inherit; gap: 6px; }
+  .filter-item-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .filter-item:hover { background: var(--border); color: var(--text); }
+  .filter-item.active { background: rgba(0,113,227,0.08); color: var(--accent); font-weight: 500; }
+  .filter-badge { font-size: 10px; background: var(--border); color: var(--text-3); padding: 1px 5px; border-radius: 10px; flex-shrink: 0; }
+  .filter-item.active .filter-badge { background: rgba(0,113,227,0.12); color: var(--accent); }
+  .sidebar-stats { margin-top: auto; padding: 14px 18px; border-top: 0.5px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .mini-stat { display: flex; justify-content: space-between; align-items: baseline; }
+  .mini-stat-label { font-size: 11px; color: var(--text-3); }
+  .mini-stat-val { font-size: 12px; font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+  .mini-stat-val.danger { color: var(--danger); }
+  .mini-stat-val.accent { color: var(--accent); }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  /* TOPBAR */
+  .topbar { background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 0.5px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 50; }
+  .search-box { position: relative; flex: 1; max-width: 320px; }
+  .search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text-3); pointer-events: none; }
+  input[type="text"] { width: 100%; background: var(--border); border: 0.5px solid transparent; border-radius: var(--radius-sm); padding: 6px 10px 6px 28px; font-size: 13px; font-family: inherit; color: var(--text); outline: none; transition: all 0.15s; }
+  input[type="text"]::placeholder { color: var(--text-3); }
+  input[type="text"]:focus { background: var(--surface-solid); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,113,227,0.1); }
+  .sort-controls { display: flex; align-items: center; gap: 5px; margin-left: auto; }
+  .sort-label { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+  .sort-pill { display: flex; align-items: center; gap: 3px; padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border-strong); background: var(--surface-solid); font-size: 11px; color: var(--text-2); cursor: pointer; transition: all 0.12s; font-family: inherit; white-space: nowrap; }
+  .sort-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .sort-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(0,113,227,0.06); font-weight: 500; }
+  .sort-pill .dir { font-size: 9px; }
+
+  /* SAVINGS BANNER */
+  .savings-banner { margin: 14px 20px 0; background: rgba(0,113,227,0.05); border: 0.5px solid rgba(0,113,227,0.18); border-radius: var(--radius); padding: 11px 14px; display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-2); transition: opacity 0.2s; }
+  .savings-banner.hidden { display: none; }
+  .savings-num { font-size: 18px; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; white-space: nowrap; }
+  .savings-text { flex: 1; line-height: 1.4; }
+  .btn-generate { background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 7px 14px; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+  .btn-generate:hover { background: var(--accent-hover); }
+  .btn-generate:active { transform: scale(0.98); }
+
+  /* TABLE */
+  .table-area { padding: 14px 20px 24px; flex: 1; }
+  .table-wrap { background: var(--surface-solid); border: 0.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--bg); }
+  th { padding: 9px 14px; text-align: left; font-size: 10px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); border-bottom: 0.5px solid var(--border); white-space: nowrap; user-select: none; }
+  th.sortable { cursor: pointer; transition: color 0.12s; }
+  th.sortable:hover { color: var(--text-2); }
+  th.sort-active { color: var(--accent); }
+  th .sa { margin-left: 2px; font-size: 9px; }
+  th:first-child { width: 38px; padding: 9px 6px 9px 14px; }
+  tbody tr { border-bottom: 0.5px solid var(--border); transition: background 0.08s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(0,0,0,0.015); }
+  tbody tr.selected { background: rgba(0,113,227,0.04); }
+  @media (prefers-color-scheme: dark) {
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody tr.selected { background: rgba(0,113,227,0.08); }
+    thead { background: rgba(255,255,255,0.02); }
+  }
+  td { padding: 10px 14px; vertical-align: middle; }
+  td:first-child { padding: 10px 6px 10px 14px; }
+  .metric-name { font-size: 12px; color: var(--text); }
+  .job-chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 20px; background: var(--border); color: var(--text-2); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  .num { font-variant-numeric: tabular-nums; }
+  .num.high { color: var(--danger); }
+  .num.med { color: var(--warning); }
+  .num.low { color: var(--text-2); }
+  .inactive-chip { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 400; }
+  .inactive-chip.fresh { background: var(--border); color: var(--text-3); }
+  .inactive-chip.warn { background: rgba(255,149,0,0.1); color: var(--warning); }
+  .inactive-chip.stale { background: rgba(255,59,48,0.07); color: var(--danger); }
+  input[type="checkbox"] { appearance: none; width: 14px; height: 14px; border: 1.5px solid var(--border-strong); border-radius: 4px; background: transparent; cursor: pointer; display: grid; place-items: center; transition: all 0.1s; flex-shrink: 0; }
+  input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  input[type="checkbox"]:checked::after { content: ''; display: block; width: 7px; height: 4px; border-left: 1.5px solid white; border-bottom: 1.5px solid white; transform: rotate(-45deg) translateY(-1px); }
+  .empty-state { padding: 56px 24px; text-align: center; color: var(--text-3); font-size: 13px; }
+  .loading-state { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 56px; color: var(--text-3); font-size: 13px; }
+  .spinner { width: 15px; height: 15px; border: 1.5px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MODAL */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface-solid); border: 0.5px solid var(--border); border-radius: 16px; width: 620px; max-width: 92vw; max-height: 78vh; display: flex; flex-direction: column; transform: scale(0.96) translateY(10px); transition: transform 0.18s; overflow: hidden; }
+  .modal-backdrop.open .modal { transform: scale(1) translateY(0); }
+  .modal-header { padding: 16px 18px 13px; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .modal-subtitle { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .modal-close { background: var(--border); border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 12px; font-family: inherit; flex-shrink: 0; transition: background 0.12s; }
+  .modal-close:hover { background: var(--border-strong); }
+  .modal-body { flex: 1; overflow-y: auto; padding: 14px 18px; }
+  pre { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 13px 14px; font-size: 11px; line-height: 1.7; color: var(--text); overflow-x: auto; font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace; white-space: pre; }
+  .modal-footer { padding: 12px 18px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .btn-secondary { background: var(--border); border: none; border-radius: var(--radius-sm); padding: 6px 13px; font-size: 12px; font-family: inherit; color: var(--text-2); cursor: pointer; transition: all 0.12s; }
+  .btn-secondary:hover { background: var(--border-strong); color: var(--text); }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Cardamon</div>
+      <div class="logo-sub">Ghost metric auditor</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Job</div>
+      <div class="filter-group" id="job-filters">
+        <button class="filter-item active" data-job="">
+          <span class="filter-item-label">All jobs</span>
+          <span class="filter-badge" id="badge-all">—</span>
+        </button>
+      </div>
+    </div>
+    <div class="sidebar-stats">
+      <div class="mini-stat">
+        <span class="mini-stat-label">Ghost metrics</span>
+        <span class="mini-stat-val danger" id="stat-total">—</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-stat-label">Total series</span>
+        <span class="mini-stat-val" id="stat-series">—</span>
+      </div>
+      <div class="mini-stat">
+        <span class="mini-stat-label">Selected</span>
+        <span class="mini-stat-val accent" id="stat-selected">0</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/>
+        </svg>
+        <input type="text" id="search" placeholder="Search metrics…">
+      </div>
+      <div class="sort-controls">
+        <span class="sort-label">Sort by</span>
+        <button class="sort-pill active" data-col="series_count">Series <span class="dir">↓</span></button>
+        <button class="sort-pill" data-col="label_count">Labels <span class="dir">↓</span></button>
+        <button class="sort-pill" data-col="inactive_duration">Inactive <span class="dir">↓</span></button>
+        <button class="sort-pill" data-col="name">Name <span class="dir">↓</span></button>
+      </div>
+    </div>
+
+    <div class="savings-banner hidden" id="savings-banner">
+      <div class="savings-num" id="savings-num">—</div>
+      <div class="savings-text" id="savings-text"></div>
+      <button class="btn-generate" id="btn-generate">Generate drop rules</button>
+    </div>
+
+    <div class="table-area">
+      <div class="table-wrap">
+        <div class="loading-state" id="loading"><div class="spinner"></div>Loading…</div>
+        <table id="table" style="display:none">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="check-all"></th>
+              <th>Metric</th>
+              <th>Job</th>
+              <th class="sortable sort-active" data-col="series_count">Series<span class="sa">↓</span></th>
+              <th class="sortable" data-col="label_count">Labels<span class="sa"></span></th>
+              <th class="sortable" data-col="inactive_duration">Inactive for<span class="sa"></span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty-state" id="empty" style="display:none">No metrics match your filters</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">metric_relabel_configs</div>
+        <div class="modal-subtitle" id="modal-subtitle"></div>
+      </div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body"><pre id="drop-output"></pre></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-copy">Copy</button>
+      <button class="btn-generate" id="btn-copy-close">Copy & close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let allData = [], filtered = [], selected = new Set();
+  let activeJob = '', sortCol = 'series_count', sortDir = 'desc';
+
+  async function load() {
+    try {
+      const res = await fetch('/api/ghosts');
+      allData = await res.json();
+      init();
+    } catch(e) {
+      document.getElementById('loading').innerHTML = '<span style="color:var(--danger)">Failed to load /api/ghosts</span>';
+    }
+  }
+
+  function init() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('table').style.display = 'table';
+    populateJobs();
+    updateSidebarStats();
+    applyFilters();
+  }
+
+  function populateJobs() {
+    const jobs = [...new Set(allData.map(m => m.job).filter(Boolean))].sort();
+    const container = document.getElementById('job-filters');
+    document.getElementById('badge-all').textContent = allData.length;
+    container.querySelector('[data-job=""]').addEventListener('click', () => setJob(''));
+    jobs.forEach(job => {
+      const count = allData.filter(m => m.job === job).length;
+      const btn = document.createElement('button');
+      btn.className = 'filter-item';
+      btn.dataset.job = job;
+      btn.innerHTML = `<span class="filter-item-label">${esc(job)}</span><span class="filter-badge">${count}</span>`;
+      btn.addEventListener('click', () => setJob(job));
+      container.appendChild(btn);
+    });
+  }
+
+  function setJob(job) {
+    activeJob = job;
+    document.querySelectorAll('.filter-item').forEach(b => b.classList.toggle('active', b.dataset.job === job));
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const q = document.getElementById('search').value.toLowerCase();
+    filtered = allData.filter(m => {
+      if (q && !m.name.toLowerCase().includes(q)) return false;
+      if (activeJob && m.job !== activeJob) return false;
+      return true;
+    });
+    applySort();
+    render();
+  }
+
+  function parseDuration(s) {
+    if (!s || s === '0m') return 0;
+    let mins = 0;
+    const d = s.match(/(\d+)d/); if (d) mins += parseInt(d[1]) * 1440;
+    const h = s.match(/(\d+)h/); if (h) mins += parseInt(h[1]) * 60;
+    const m = s.match(/(\d+)m/); if (m) mins += parseInt(m[1]);
+    return mins;
+  }
+
+  function applySort() {
+    filtered.sort((a, b) => {
+      let av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
+      if (sortCol === 'inactive_duration') { av = parseDuration(av); bv = parseDuration(bv); }
+      if (typeof av === 'number') return sortDir === 'asc' ? av - bv : bv - av;
+      return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    });
+  }
+
+  function render() {
+    const tbody = document.getElementById('tbody');
+    document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+    if (!filtered.length) { tbody.innerHTML = ''; updateBanner(); return; }
+
+    tbody.innerHTML = filtered.map(m => {
+      const sel = selected.has(m.name);
+      const sc = m.series_count > 50 ? 'high' : m.series_count > 10 ? 'med' : 'low';
+      const mins = parseDuration(m.inactive_duration);
+      const ic = mins === 0 ? 'fresh' : mins >= 7*1440 ? 'stale' : 'warn';
+      return `<tr class="${sel?'selected':''}" >
+        <td><input type="checkbox" class="row-check" data-name="${esc(m.name)}" ${sel?'checked':''}></td>
+        <td><span class="metric-name">${esc(m.name)}</span></td>
+        <td>${m.job ? `<span class="job-chip" title="${esc(m.job)}">${esc(m.job)}</span>` : '<span style="color:var(--text-3)">—</span>'}</td>
+        <td><span class="num ${sc}">${m.series_count}</span></td>
+        <td><span class="num">${m.label_count}</span></td>
+        <td><span class="inactive-chip ${ic}">${esc(m.inactive_duration||'0m')}</span></td>
+      </tr>`;
+    }).join('');
+    updateBanner();
+  }
+
+  function updateSidebarStats() {
+    document.getElementById('stat-total').textContent = allData.length.toLocaleString();
+    document.getElementById('stat-series').textContent = allData.reduce((s,m) => s+m.series_count,0).toLocaleString();
+  }
+
+  function updateSelCount() {
+    document.getElementById('stat-selected').textContent = selected.size.toLocaleString();
+  }
+
+  function updateBanner() {
+    const banner = document.getElementById('savings-banner');
+    if (!selected.size) { banner.classList.add('hidden'); return; }
+    banner.classList.remove('hidden');
+    const selData = allData.filter(m => selected.has(m.name));
+    const series = selData.reduce((s,m) => s+m.series_count,0);
+    document.getElementById('savings-num').textContent = series.toLocaleString() + ' series';
+    document.getElementById('savings-text').textContent =
+      `Dropping ${selected.size} metric${selected.size!==1?'s':''} would remove these series from TSDB.`;
+  }
+
+  document.getElementById('check-all').addEventListener('change', e => {
+    filtered.forEach(m => e.target.checked ? selected.add(m.name) : selected.delete(m.name));
+    updateSelCount();
+    render();
+  });
+
+  document.getElementById('tbody').addEventListener('change', e => {
+    if (!e.target.classList.contains('row-check')) return;
+    e.target.checked ? selected.add(e.target.dataset.name) : selected.delete(e.target.dataset.name);
+    e.target.closest('tr').classList.toggle('selected', e.target.checked);
+    updateBanner();
+    updateSelCount();
+  });
+
+  document.querySelectorAll('.sort-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const col = pill.dataset.col;
+      if (sortCol === col) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+      else { sortCol = col; sortDir = 'desc'; }
+      document.querySelectorAll('.sort-pill').forEach(p => { p.classList.remove('active'); p.querySelector('.dir').textContent = '↓'; });
+      pill.classList.add('active');
+      pill.querySelector('.dir').textContent = sortDir === 'asc' ? '↑' : '↓';
+      document.querySelectorAll('th.sortable').forEach(th => {
+        th.classList.toggle('sort-active', th.dataset.col === col);
+        th.querySelector('.sa').textContent = th.dataset.col === col ? (sortDir==='asc'?'↑':'↓') : '';
+      });
+      applySort(); render();
+    });
+  });
+
+  document.getElementById('search').addEventListener('input', applyFilters);
+
+  document.getElementById('btn-generate').addEventListener('click', () => {
+    const selData = allData.filter(m => selected.has(m.name));
+    const byJob = {};
+    selData.forEach(m => { const j = m.job||'unknown'; if(!byJob[j]) byJob[j]=[]; byJob[j].push(m); });
+    let out = '';
+    for (const [job, metrics] of Object.entries(byJob)) {
+      out += `# job: ${job}\n# ${metrics.length} metrics · ${metrics.reduce((s,m)=>s+m.series_count,0)} series\n\n`;
+      metrics.forEach(m => { out += `- source_labels: [__name__]\n  regex: "${m.name}"\n  action: drop\n\n`; });
+    }
+    document.getElementById('drop-output').textContent = out.trim();
+    document.getElementById('modal-subtitle').textContent =
+      `${selData.length} metric${selData.length!==1?'s':''} · ${selData.reduce((s,m)=>s+m.series_count,0).toLocaleString()} series`;
+    document.getElementById('modal').classList.add('open');
+  });
+
+  const closeModal = () => document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+  async function copyDrop() { await navigator.clipboard.writeText(document.getElementById('drop-output').textContent); }
+
+  document.getElementById('btn-copy').addEventListener('click', async () => {
+    await copyDrop();
+    const b = document.getElementById('btn-copy');
+    b.textContent = 'Copied!';
+    setTimeout(() => b.textContent = 'Copy', 1500);
+  });
+  document.getElementById('btn-copy-close').addEventListener('click', async () => { await copyDrop(); closeModal(); });
+
+  function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  load();
+</script>
+</body>
+</html>

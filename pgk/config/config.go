@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Prometheus struct {
 		Address string `yaml:"address"`
+		PathPrefix string `yaml:"path_prefix"`
 	} `yaml:"prometheus"`
 
 	Storage struct {
@@ -22,9 +23,9 @@ type Config struct {
 		ApiKey  string `yaml:"api_key"`
 	} `yaml:"grafana"`
 
-	Output struct {
-		File string `yaml:"file"`
-	} `yaml:"output"`
+	Audit struct {
+        ExcludePrefixes []string `yaml:"exclude_prefixes"`
+    } `yaml:"audit"`
 }
 
 func LoadConfig(path string) (*Config, error) {

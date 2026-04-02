@@ -19,54 +19,43 @@ func NewAnalyzer(client *Client) *Analyzer {
 }
 
 // DiscoverUsedMetrics crawls all dashboards and returns a unique set of metric names found
-func (a *Analyzer) DiscoverUsedMetrics() (map[string][]string, error) {
-	dashboards, err := a.client.SearchDashboards()
-	if err != nil {
-		return nil, err
-	}
+func (a *Analyzer) DiscoverUsedMetrics() ([]string, error) {
+    dashboards, err := a.client.SearchDashboards()
+    if err != nil {
+        return nil, err
+    }
 
-	usedMetrics := make(map[string][]string) // metric -> []dashboardTitles
-	var mu sync.Mutex
-	var wg sync.WaitGroup
+    seen := make(map[string]bool)
+    var mu sync.Mutex
+    var wg sync.WaitGroup
+    sem := make(chan struct{}, 10)
 
-	// Semaphore to limit concurrency (don't DDoS your own Grafana)
-	sem := make(chan struct{}, 10)
+    for _, dash := range dashboards {
+        wg.Add(1)
+        go func(d DashboardMetadata) {
+            defer wg.Done()
+            sem <- struct{}{}
+            defer func() { <-sem }()
 
-	for _, dash := range dashboards {
-		wg.Add(1)
-		go func(d DashboardMetadata) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
+            rawJSON, err := a.client.GetDashboardModel(d.UID)
+            if err != nil {
+                return
+            }
 
-			rawJSON, err := a.client.GetDashboardModel(d.UID)
-			if err != nil {
-				return
-			}
+            matches := MetricRegex.FindAllString(string(rawJSON), -1)
+            mu.Lock()
+            for _, m := range matches {
+                seen[m] = true
+            }
+            mu.Unlock()
+        }(dash)
+    }
 
-			// Find all potential metric strings in the JSON
-			matches := MetricRegex.FindAllString(string(rawJSON), -1)
+    wg.Wait()
 
-			mu.Lock()
-			for _, m := range matches {
-				// Avoid duplicates within the same dashboard list
-				if !contains(usedMetrics[m], d.Title) {
-					usedMetrics[m] = append(usedMetrics[m], d.Title)
-				}
-			}
-			mu.Unlock()
-		}(dash)
-	}
-
-	wg.Wait()
-	return usedMetrics, nil
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+    metrics := make([]string, 0, len(seen))
+    for k := range seen {
+        metrics = append(metrics, k)
+    }
+    return metrics, nil
 }

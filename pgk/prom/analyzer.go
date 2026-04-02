@@ -11,9 +11,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
-	v1 "github.com/prometheus/prometheus/web/api/v1"
+	"github.com/dominikhei/cardamon/pgk/audit"
+	"github.com/prometheus/common/model"
 )
 
 type Analyzer struct {
@@ -57,20 +59,9 @@ func (a *Analyzer) GetMetricsInRules(ctx context.Context) (map[string]bool, erro
 
 	for _, group := range ruleGroups.Groups {
 		for _, rule := range group.Rules {
-			var query string
-
-			// Handle both Alerting and Recording rules
-			switch r := rule.(type) {
-			case v1.AlertingRule:
-				query = r.Query
-			case v1.RecordingRule:
-				query = r.Query
-			}
-
-			// Extract metric names from the PromQL expression
-			matches := MetricRegex.FindAllString(query, -1)
+			raw := fmt.Sprintf("%+v", rule)
+			matches := MetricRegex.FindAllString(raw, -1)
 			for _, m := range matches {
-				// We'll filter these against the Master List later in the Audit stage
 				usedInRules[m] = true
 			}
 		}
@@ -108,7 +99,6 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 			continue
 		}
 
-		// Skip files older than our flag limit
 		if info.ModTime().Before(cutoff) {
 			continue
 		}
@@ -152,4 +142,88 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
 		}
 	}
 	return scanner.Err()
+}
+
+func  (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []string {
+    var filtered []string
+    for _, m := range metrics {
+        excluded := false
+        for _, prefix := range excludePrefixes {
+            if strings.HasPrefix(m, strings.TrimSpace(prefix)) {
+                excluded = true
+                break
+            }
+        }
+        if !excluded {
+            filtered = append(filtered, m)
+        }
+    }
+    return filtered
+}
+
+func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.MetricReport, error) {
+	endTime := time.Now()
+	startTime := endTime.Add(-24 * time.Hour)
+
+	reports := make([]audit.MetricReport, len(ghosts))
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10)
+
+	for i, name := range ghosts {
+		wg.Add(1)
+		go func(i int, name string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			report := audit.MetricReport{Name: name}
+
+			// Series count, label count, job
+			series, _, err := a.client.api.Series(ctx, []string{name}, startTime, endTime)
+			if err == nil {
+				report.SeriesCount = len(series)
+
+				labelSet := make(map[string]bool)
+				for _, s := range series {
+					for k := range s {
+						labelSet[string(k)] = true
+					}
+				}
+				report.LabelCount = len(labelSet)
+
+				if len(series) > 0 {
+					report.Job = string(series[0]["job"])
+				}
+			}
+
+			// Inactive duration via timestamp query
+			result, _, err := a.client.api.Query(ctx, fmt.Sprintf("timestamp(%s)", name), time.Now())
+			if err == nil {
+				if vec, ok := result.(model.Vector); ok && len(vec) > 0 {
+					lastReceived := time.Unix(int64(vec[0].Value), 0)
+					report.InactiveDuration = formatDuration(time.Since(lastReceived))
+				}
+			}
+
+			reports[i] = report
+		}(i, name)
+	}
+
+	wg.Wait()
+	return reports, nil
+}
+
+func formatDuration(d time.Duration) string {
+	d = d.Round(time.Minute)
+	days := int(d.Hours()) / 24
+	hours := int(d.Hours()) % 24
+	minutes := int(d.Minutes()) % 60
+
+	if days > 0 {
+		return fmt.Sprintf("%dd %dh", days, hours)
+	}
+	if hours > 0 {
+		return fmt.Sprintf("%dh %dm", hours, minutes)
+	}
+	return fmt.Sprintf("%dm", minutes)
 }
