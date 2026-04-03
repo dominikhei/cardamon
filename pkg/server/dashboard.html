@@ -467,7 +467,6 @@ function renderYAML() {
       .map(n => allData.find(m => m.name === n))
       .filter(Boolean)
       .reduce((s, m) => s + m.series_count, 0);
-    out += `# job: ${job}\n# ${rules.length} rule${rules.length !== 1 ? 's' : ''} · ${series} series\n\n`;
     rules.forEach(r => {
       out += `- source_labels: [__name__]\n  regex: "${r.regex}"\n  action: drop\n\n`;
     });
