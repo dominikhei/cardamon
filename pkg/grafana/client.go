@@ -10,7 +10,9 @@ import (
 type Client struct {
 	URL    string
 	PathPrefix string
-	APIKey string
+	Token string
+	Username   string
+	Password   string
 	Client *http.Client
 }
 
@@ -20,11 +22,13 @@ type DashboardMetadata struct {
 	Title string `json:"title"`
 }
 
-func NewClient(url, pathPrefix string, apiKey string) *Client {
+func NewClient(url, pathPrefix string, token string, username string, password string) *Client {
 	return &Client{
 		URL:    url,
 		PathPrefix: pathPrefix,
-		APIKey: apiKey,
+		Token: token,
+		Username: username,
+		Password: password,
 		Client: &http.Client{},
 	}
 }
@@ -35,7 +39,11 @@ func (c *Client) newRequest(method, path string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	if c.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.Token)
+	} else if c.Username != "" && c.Password != "" {
+		req.SetBasicAuth(c.Username, c.Password)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	return req, nil
 }

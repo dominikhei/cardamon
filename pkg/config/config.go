@@ -11,6 +11,9 @@ type Config struct {
 	Prometheus struct {
 		Address string `yaml:"address"`
 		PathPrefix string `yaml:"path_prefix"`
+		Token  string `yaml:"token"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
 	} `yaml:"prometheus"`
 
 	Storage struct {
@@ -21,7 +24,9 @@ type Config struct {
 	Grafana struct {
 		Address string `yaml:"address"`
 		PathPrefix string `yaml:"path_prefix"`
-		ApiKey  string `yaml:"api_key"`
+		Token  string `yaml:"token"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
 	} `yaml:"grafana"`
 
 	Audit struct {
