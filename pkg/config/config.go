@@ -3,12 +3,18 @@ package config
 import (
 	"fmt"
 	"os"
+
 	"gopkg.in/yaml.v3"
 )
 
+// Config is the mapping of the config.yaml used to supply parameters to cardamon.
 type Config struct {
 	Prometheus struct {
-		Address string `yaml:"address"`
+		Address    string `yaml:"address"`
+		PathPrefix string `yaml:"path_prefix"`
+		Token      string `yaml:"token"`
+		Username   string `yaml:"username"`
+		Password   string `yaml:"password"`
 	} `yaml:"prometheus"`
 
 	Storage struct {
@@ -17,15 +23,23 @@ type Config struct {
 	} `yaml:"storage"`
 
 	Grafana struct {
-		Address string `yaml:"address"`
-		ApiKey  string `yaml:"api_key"`
+		Address    string `yaml:"address"`
+		PathPrefix string `yaml:"path_prefix"`
+		Token      string `yaml:"token"`
+		Username   string `yaml:"username"`
+		Password   string `yaml:"password"`
 	} `yaml:"grafana"`
 
-	Output struct {
-		File string `yaml:"file"`
-	} `yaml:"output"`
+	Audit struct {
+		ExcludePrefixes []string `yaml:"exclude_prefixes"`
+	} `yaml:"audit"`
+
+	Dashboard struct {
+		Port int `yaml:"port"`
+	} `yaml:"dashboard"`
 }
 
+// Function to load the config file.
 func LoadConfig(path string) (*Config, error) {
 	conf := &Config{}
 	data, err := os.ReadFile(path)

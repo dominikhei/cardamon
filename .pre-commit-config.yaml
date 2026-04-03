@@ -1,10 +1,13 @@
+---
 repos:
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:
       - id: go-fmt
       - id: go-imports
+        exclude: ^\.github/workflows/
       - id: golangci-lint
+        exclude: ^\.github/workflows/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -19,3 +22,4 @@ repos:
     rev: v1.32.0
     hooks:
       - id: yamllint
+        exclude: ^\.github/workflows/
