@@ -5,8 +5,8 @@ import (
 	"sync"
 )
 
-// MetricRegex matches Prometheus-style metric names. 
-// It looks for sequences of characters that start with a letter/underscore 
+// MetricRegex matches Prometheus-style metric names.
+// It looks for sequences of characters that start with a letter/underscore
 // and contain alphanumeric/colons/underscores.
 var MetricRegex = regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_:]+`)
 

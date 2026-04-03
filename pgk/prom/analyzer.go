@@ -89,7 +89,7 @@ type QueryLogEntry struct {
 // It handles both active .log files and rotated .gz files.
 func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[string]bool, error) {
 	usedInLogs := make(map[string]bool)
-	
+
 	// Calculate the cutoff time
 	cutoff := time.Now().AddDate(0, 0, -days)
 
@@ -116,7 +116,7 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 		path := filepath.Join(logDir, file.Name())
 		err = a.parseLogFile(path, usedInLogs)
 		if err != nil {
-			continue 
+			continue
 		}
 	}
 
