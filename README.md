@@ -1,7 +1,8 @@
 # Cardamon
 **Cardamon** is a metric auditor for Prometheus. It identifies metrics that exist in your TSDB but are never actually queried by dashboards, alerting rules, recording rules, or any other consumer. You can then generate Prometheus drop rules to remove them and reduce storage need.
 
----
+## Demo
+![](./media/cardamon_demo.gif)
 
 ## What is an Unused Metric?
 
