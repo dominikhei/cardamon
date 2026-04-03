@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	promClient, err := prom.NewClient(cfg.Prometheus.Address + cfg.Prometheus.PathPrefix)
+	promClient, err := prom.NewClient(cfg.Prometheus.Address + cfg.Prometheus.PathPrefix, cfg.Prometheus.Token, cfg.Prometheus.Username, cfg.Prometheus.Password)
 	if err != nil {
 		log.Fatalf("Failed to initialize Prometheus client: %v", err)
 	}
