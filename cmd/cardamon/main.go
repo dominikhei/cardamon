@@ -32,7 +32,7 @@ func main() {
 	}
 	promAnalyzer := prom.NewAnalyzer(promClient)
 	if err != nil {
-		log.Fatalf("Failed to initialize analyzer: %v", err)
+		log.Fatalf("Failed to initialize Prometeheus analyzer: %v", err)
 	}
 	grafanaClient := grafana.NewClient(cfg.Grafana.Address, cfg.Grafana.PathPrefix, cfg.Grafana.Token, cfg.Grafana.Username, cfg.Grafana.Password)
 	grafanaAnalyzer := grafana.NewAnalyzer(grafanaClient)
@@ -41,12 +41,12 @@ func main() {
 
 	allMetrics, err := promAnalyzer.GetAllMetricNames(ctx)
 	if err != nil {
-		log.Fatalf("Error fetching master list: %v", err)
+		log.Fatalf("Error fetching all metric names from Prometheus: %v", err)
 	}
 
 	grafanaUsed, err := grafanaAnalyzer.DiscoverUsedMetrics()
 	if err != nil {
-		fmt.Printf("Warning: Grafana crawl failed: %v\n", err)
+		fmt.Printf("Warning: Creawling Grafana failed: %v\n", err)
 	}
 
 	rulesUsed, err := promAnalyzer.GetMetricsInRules(ctx)
