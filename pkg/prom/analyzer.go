@@ -120,7 +120,7 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool, cutoff time.
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 
 	var reader io.Reader = f
 	if strings.HasSuffix(path, ".gz") {
@@ -128,7 +128,7 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool, cutoff time.
 		if err != nil {
 			return err
 		}
-		defer gz.Close()
+		defer gz.Close() //nolint:errcheck
 		reader = gz
 	}
 

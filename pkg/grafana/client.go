@@ -59,7 +59,7 @@ func (c *Client) SearchDashboards() ([]DashboardMetadata, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	var results []DashboardMetadata
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
@@ -79,7 +79,7 @@ func (c *Client) GetDashboardModel(uid string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	return io.ReadAll(resp.Body)
 }
