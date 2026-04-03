@@ -8,12 +8,12 @@ import (
 
 // Client contains all necessary params to connect to Grafana.
 type Client struct {
-	URL    string
+	URL        string
 	PathPrefix string
-	Token string
+	Token      string
 	Username   string
 	Password   string
-	Client *http.Client
+	Client     *http.Client
 }
 
 // DashboardMetadata holds UIDs and Titels of Dashboards.
@@ -24,12 +24,12 @@ type DashboardMetadata struct {
 
 func NewClient(url, pathPrefix string, token string, username string, password string) *Client {
 	return &Client{
-		URL:    url,
+		URL:        url,
 		PathPrefix: pathPrefix,
-		Token: token,
-		Username: username,
-		Password: password,
-		Client: &http.Client{},
+		Token:      token,
+		Username:   username,
+		Password:   password,
+		Client:     &http.Client{},
 	}
 }
 

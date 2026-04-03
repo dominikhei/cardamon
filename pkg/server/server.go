@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dominikhei/cardamon/pkg/droprules"
 	"github.com/dominikhei/cardamon/pkg/audit"
+	"github.com/dominikhei/cardamon/pkg/droprules"
 )
 
 // Server provides an HTTP interface to inspect unused ("ghost") metrics
@@ -25,7 +25,7 @@ type Server struct {
 //   - "/"              : serves the dashboard HTML UI
 //   - "/api/ghosts"    : returns all ghost metrics as JSON
 //   - "/api/droprules" : accepts a list of metric names and returns
-//                        generated drop rules grouped by job
+//     generated drop rules grouped by job
 //
 // The provided ghosts slice is used as the data source for all endpoints.
 func New(ghosts []audit.MetricReport) *Server {

@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	promClient, err := prom.NewClient(cfg.Prometheus.Address + cfg.Prometheus.PathPrefix, cfg.Prometheus.Token, cfg.Prometheus.Username, cfg.Prometheus.Password)
+	promClient, err := prom.NewClient(cfg.Prometheus.Address+cfg.Prometheus.PathPrefix, cfg.Prometheus.Token, cfg.Prometheus.Username, cfg.Prometheus.Password)
 	if err != nil {
 		log.Fatalf("Failed to initialize Prometheus client: %v", err)
 	}
@@ -56,9 +56,9 @@ func main() {
 
 	var logsUsed map[string]bool
 	if cfg.Storage.QueryLogDir != "" {
-		
+
 		logsUsed, err = promAnalyzer.DiscoverUsedMetricsFromLogs(
-			cfg.Storage.QueryLogDir, 
+			cfg.Storage.QueryLogDir,
 			cfg.Storage.LookbackDays,
 		)
 		if err != nil {
@@ -67,7 +67,7 @@ func main() {
 	}
 	allMetrics = promAnalyzer.FilterMetrics(allMetrics, cfg.Audit.ExcludePrefixes)
 	ghosts := engine.IdentifyGhosts(allMetrics, grafanaUsed, rulesUsed, logsUsed)
-	ghostReports, err :=  promAnalyzer.GetGhostStats(ctx, ghosts)
+	ghostReports, err := promAnalyzer.GetGhostStats(ctx, ghosts)
 	if err != nil {
 		log.Fatalf("Failed to fetch ghost stats: %v", err)
 	}

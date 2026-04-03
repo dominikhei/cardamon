@@ -69,7 +69,7 @@ server:
 
 ### Enabling the Prometheus query log
 
-Cardamon scans the Prometheus query log to discover which metrics are actually being queried. 
+Cardamon scans the Prometheus query log to discover which metrics are actually being queried.
 You have to copy those files to your instance or start cardamon inside the Prometheus server to use them, as cardamon can not query them on another host.
 They [need to be enabled](https://prometheus.io/docs/guides/query-log/), e.g via your values.yaml.
 

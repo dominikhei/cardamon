@@ -19,13 +19,13 @@ type roundTripper struct {
 }
 
 func (rt *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-    r := req.Clone(req.Context())
-    if rt.token != "" {
-        r.Header.Set("Authorization", "Bearer "+rt.token)
-    } else if rt.username != "" {
-        r.SetBasicAuth(rt.username, rt.password)
-    }
-    return rt.base.RoundTrip(r)
+	r := req.Clone(req.Context())
+	if rt.token != "" {
+		r.Header.Set("Authorization", "Bearer "+rt.token)
+	} else if rt.username != "" {
+		r.SetBasicAuth(rt.username, rt.password)
+	}
+	return rt.base.RoundTrip(r)
 }
 
 func NewClient(address, token, username, password string) (*Client, error) {

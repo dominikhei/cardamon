@@ -18,7 +18,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-//Analyzer contains the Prometheus client from client.go.
+// Analyzer contains the Prometheus client from client.go.
 type Analyzer struct {
 	client *Client
 }
@@ -153,21 +153,21 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool, cutoff time.
 }
 
 // FilterMetrics filters metrics based on an exclusion list.
-func  (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []string {
-    var filtered []string
-    for _, m := range metrics {
-        excluded := false
-        for _, prefix := range excludePrefixes {
-            if strings.HasPrefix(m, strings.TrimSpace(prefix)) {
-                excluded = true
-                break
-            }
-        }
-        if !excluded {
-            filtered = append(filtered, m)
-        }
-    }
-    return filtered
+func (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []string {
+	var filtered []string
+	for _, m := range metrics {
+		excluded := false
+		for _, prefix := range excludePrefixes {
+			if strings.HasPrefix(m, strings.TrimSpace(prefix)) {
+				excluded = true
+				break
+			}
+		}
+		if !excluded {
+			filtered = append(filtered, m)
+		}
+	}
+	return filtered
 }
 
 // GetGhostStats calculates general statistics, like the series count, label count and when it was last scraped.
