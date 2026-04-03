@@ -73,17 +73,14 @@ func (a *Analyzer) GetMetricsInRules(ctx context.Context) (map[string]bool, erro
 
 // QueryLogEntry contains a query from the query log.
 type QueryLogEntry struct {
+	Time   time.Time `json:"time"`
 	Params struct {
 		Query string `json:"query"`
 	} `json:"params"`
 }
 
-// DiscoverUsedMetricsFromLogs scans a directory for Prometheus query logs.
-// It handles both active .log files and rotated .gz files that are from the last n days.
 func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[string]bool, error) {
 	usedInLogs := make(map[string]bool)
-	
-	// Calculate the cutoff time
 	cutoff := time.Now().AddDate(0, 0, -days)
 
 	files, err := os.ReadDir(logDir)
@@ -92,7 +89,8 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 	}
 
 	for _, file := range files {
-		if !strings.Contains(file.Name(), "query.log") {
+		name := file.Name()
+		if !strings.HasSuffix(name, ".log") && !strings.HasSuffix(name, ".log.gz") {
 			continue
 		}
 
@@ -101,14 +99,14 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 			continue
 		}
 
+		// Skip rotated files that are entirely too old
 		if info.ModTime().Before(cutoff) {
 			continue
 		}
 
-		path := filepath.Join(logDir, file.Name())
-		err = a.parseLogFile(path, usedInLogs)
-		if err != nil {
-			continue 
+		path := filepath.Join(logDir, name)
+		if err = a.parseLogFile(path, usedInLogs, cutoff); err != nil {
+			continue
 		}
 	}
 
@@ -116,7 +114,8 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 }
 
 // parseLogFile scans a logFile for all expressions that are potentially metrics.
-func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
+// It breaks early once it hits entries older than the cutoff.
+func (a *Analyzer) parseLogFile(path string, found map[string]bool, cutoff time.Time) error {
 	f, err := os.Open(path)
 	if err != nil {
 		return err
@@ -136,13 +135,20 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		var entry QueryLogEntry
-		if err := json.Unmarshal(scanner.Bytes(), &entry); err == nil {
-			matches := MetricRegex.FindAllString(entry.Params.Query, -1)
-			for _, m := range matches {
-				found[m] = true
-			}
+		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
+			continue
+		}
+
+		if entry.Time.Before(cutoff) {
+			break
+		}
+
+		matches := MetricRegex.FindAllString(entry.Params.Query, -1)
+		for _, m := range matches {
+			found[m] = true
 		}
 	}
+
 	return scanner.Err()
 }
 

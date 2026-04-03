@@ -72,7 +72,6 @@ func main() {
 		log.Fatalf("Failed to fetch ghost stats: %v", err)
 	}
 
-
 	apiGhosts := make([]audit.MetricReport, 0, len(ghostReports))
 	for _, g := range ghostReports {
 		apiGhosts = append(apiGhosts, audit.MetricReport{
