@@ -14,10 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dominikhei/cardamon/pgk/audit"
+	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/prometheus/common/model"
 )
 
+//Analyzer contains the Prometheus client from client.go.
 type Analyzer struct {
 	client *Client
 }
@@ -45,10 +46,10 @@ func (a *Analyzer) GetAllMetricNames(ctx context.Context) ([]string, error) {
 	return metrics, nil
 }
 
-// Reuse the same regex logic from Grafana to find metrics inside Alert expressions
+// Regex to find metrics inside Alert expressions.
 var MetricRegex = regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_:]+`)
 
-// GetMetricsInRules fetches all metrics currently used in Alerts and Recording Rules
+// GetMetricsInRules fetches all metrics currently used in Alerts and Recording Rules.
 func (a *Analyzer) GetMetricsInRules(ctx context.Context) (map[string]bool, error) {
 	ruleGroups, err := a.client.api.Rules(ctx)
 	if err != nil {
@@ -70,6 +71,7 @@ func (a *Analyzer) GetMetricsInRules(ctx context.Context) (map[string]bool, erro
 	return usedInRules, nil
 }
 
+// QueryLogEntry contains a query from the query log.
 type QueryLogEntry struct {
 	Params struct {
 		Query string `json:"query"`
@@ -77,7 +79,7 @@ type QueryLogEntry struct {
 }
 
 // DiscoverUsedMetricsFromLogs scans a directory for Prometheus query logs.
-// It handles both active .log files and rotated .gz files.
+// It handles both active .log files and rotated .gz files that are from the last n days.
 func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[string]bool, error) {
 	usedInLogs := make(map[string]bool)
 	
@@ -113,6 +115,7 @@ func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[str
 	return usedInLogs, nil
 }
 
+// parseLogFile scans a logFile for all expressions that are potentially metrics.
 func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
 	f, err := os.Open(path)
 	if err != nil {
@@ -134,7 +137,6 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
 	for scanner.Scan() {
 		var entry QueryLogEntry
 		if err := json.Unmarshal(scanner.Bytes(), &entry); err == nil {
-			// Reuse your existing MetricRegex
 			matches := MetricRegex.FindAllString(entry.Params.Query, -1)
 			for _, m := range matches {
 				found[m] = true
@@ -144,6 +146,7 @@ func (a *Analyzer) parseLogFile(path string, found map[string]bool) error {
 	return scanner.Err()
 }
 
+// FilterMetrics filters metrics based on an exclusion list.
 func  (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []string {
     var filtered []string
     for _, m := range metrics {
@@ -161,6 +164,7 @@ func  (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []
     return filtered
 }
 
+// GetGhostStats calculates general statistics, like the series count, label count and when it was last scraped.
 func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.MetricReport, error) {
 	endTime := time.Now()
 	startTime := endTime.Add(-24 * time.Hour)
@@ -178,7 +182,6 @@ func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.
 
 			report := audit.MetricReport{Name: name}
 
-			// Series count, label count, job
 			series, _, err := a.client.api.Series(ctx, []string{name}, startTime, endTime)
 			if err == nil {
 				report.SeriesCount = len(series)
@@ -196,7 +199,6 @@ func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.
 				}
 			}
 
-			// Inactive duration via timestamp query
 			result, _, err := a.client.api.Query(ctx, fmt.Sprintf("timestamp(%s)", name), time.Now())
 			if err == nil {
 				if vec, ok := result.(model.Vector); ok && len(vec) > 0 {
@@ -213,6 +215,7 @@ func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.
 	return reports, nil
 }
 
+// Helper function to format the inactive duration for the UI.
 func formatDuration(d time.Duration) string {
 	d = d.Round(time.Minute)
 	days := int(d.Hours()) / 24

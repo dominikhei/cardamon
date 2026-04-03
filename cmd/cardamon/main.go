@@ -7,11 +7,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/dominikhei/cardamon/pgk/config"
-	"github.com/dominikhei/cardamon/pgk/engine"
-	"github.com/dominikhei/cardamon/pgk/grafana"
-	"github.com/dominikhei/cardamon/pgk/prom"
-	"github.com/dominikhei/cardamon/pgk/server"
+	"github.com/dominikhei/cardamon/pkg/audit"
+	"github.com/dominikhei/cardamon/pkg/config"
+	"github.com/dominikhei/cardamon/pkg/engine"
+	"github.com/dominikhei/cardamon/pkg/grafana"
+	"github.com/dominikhei/cardamon/pkg/prom"
+	"github.com/dominikhei/cardamon/pkg/server"
 )
 
 func main() {
@@ -72,10 +73,9 @@ func main() {
 	}
 
 
-
-	apiGhosts := make([]server.GhostMetric, 0, len(ghostReports))
+	apiGhosts := make([]audit.MetricReport, 0, len(ghostReports))
 	for _, g := range ghostReports {
-		apiGhosts = append(apiGhosts, server.GhostMetric{
+		apiGhosts = append(apiGhosts, audit.MetricReport{
 			Name:             g.Name,
 			Job:              g.Job,
 			SeriesCount:      g.SeriesCount,

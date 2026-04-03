@@ -6,6 +6,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Config is the mapping of the config.yaml used to supply parameters to cardamon.
 type Config struct {
 	Prometheus struct {
 		Address string `yaml:"address"`
@@ -32,6 +33,7 @@ type Config struct {
 	} `yaml:"dashboard"`
 }
 
+// Function to load the config file.
 func LoadConfig(path string) (*Config, error) {
 	conf := &Config{}
 	data, err := os.ReadFile(path)

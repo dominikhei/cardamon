@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Client contains all necessary params to connect to Grafana.
 type Client struct {
 	URL    string
 	PathPrefix string
@@ -13,6 +14,7 @@ type Client struct {
 	Client *http.Client
 }
 
+// DashboardMetadata holds UIDs and Titels of Dashboards.
 type DashboardMetadata struct {
 	UID   string `json:"uid"`
 	Title string `json:"title"`
@@ -27,6 +29,7 @@ func NewClient(url, pathPrefix string, apiKey string) *Client {
 	}
 }
 
+// newRequest is used to make a request to the Grafana instance, based on the params in the client struct.
 func (c *Client) newRequest(method, path string) (*http.Request, error) {
 	req, err := http.NewRequest(method, c.URL+c.PathPrefix+path, nil)
 	if err != nil {
@@ -37,7 +40,7 @@ func (c *Client) newRequest(method, path string) (*http.Request, error) {
 	return req, nil
 }
 
-// SearchDashboards finds all dashboard UIDs
+// SearchDashboards finds all dashboard UIDs.
 func (c *Client) SearchDashboards() ([]DashboardMetadata, error) {
 	req, err := c.newRequest("GET", "/api/search?type=dash-db")
 	if err != nil {
@@ -57,7 +60,7 @@ func (c *Client) SearchDashboards() ([]DashboardMetadata, error) {
 	return results, nil
 }
 
-// GetDashboardModel fetches the raw JSON of a dashboard
+// GetDashboardModel fetches the raw JSON of a dashboard based on a UID.
 func (c *Client) GetDashboardModel(uid string) ([]byte, error) {
 	req, err := c.newRequest("GET", "/api/dashboards/uid/"+uid)
 	if err != nil {

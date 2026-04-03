@@ -5,7 +5,8 @@ import (
 
 )
 
-// IdentifyGhosts now takes metrics from Dashboards, Rules, and Query Logs.
+// IdentifyGhosts takes metrics from Dashboards, Rules, and Query Logs and uses set operation to determine unused metrics.
+// The formula is: Ghost Metrics = All Metrics - (Grafana Dashboard Metrics + Prometheus Rules + Metrics queried in the last n days)
 func IdentifyGhosts(allProm []string, grafana []string, rules map[string]bool, logs map[string]bool) []string {
     masterSet := make(map[string]bool)
     for _, m := range allProm {

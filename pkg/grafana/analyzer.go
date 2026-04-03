@@ -6,10 +6,9 @@ import (
 )
 
 // MetricRegex matches Prometheus-style metric names. 
-// It looks for sequences of characters that start with a letter/underscore 
-// and contain alphanumeric/colons/underscores.
 var MetricRegex = regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_:]+`)
 
+//Analyzer contains the Grafana client from client.go
 type Analyzer struct {
 	client *Client
 }
@@ -18,7 +17,7 @@ func NewAnalyzer(client *Client) *Analyzer {
 	return &Analyzer{client: client}
 }
 
-// DiscoverUsedMetrics crawls all dashboards and returns a unique set of metric names found
+// DiscoverUsedMetrics crawls all dashboards and returns a unique set of metric names found.
 func (a *Analyzer) DiscoverUsedMetrics() ([]string, error) {
     dashboards, err := a.client.SearchDashboards()
     if err != nil {
