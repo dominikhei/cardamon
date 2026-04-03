@@ -14,7 +14,7 @@ Cardamon cross-references every metric in your TSDB against:
 - **Prometheus alerting & recording rules** All rule expressions in your Prometheus
 - **Grafana dashboards** Every metric across all dashboards in your Grafana instance
 
-Any metric not found in any of those sources is flagged as a ghost.
+Any metric not found in any of those sources is flagged as unused.
 
 ---
 
@@ -23,8 +23,8 @@ Any metric not found in any of those sources is flagged as a ghost.
 1. Cardamon fetches all metric names from Prometheus using the label values API.
 2. It collects the set of metrics that are actively used from three sources: the Prometheus query log, the rules API, and Grafana dashboard JSON.
 3. Based on the Overlap with (1) Cardamon identifies actual metrics from (2).
-4. The difference between (1) and (3) is your ghost set.
-5. For each ghost, Cardamon fetches series count, label cardinality, job, and last-seen timestamp from Prometheus.
+4. The difference between (1) and (3) is your unused metric set.
+5. For each unused metric, Cardamon fetches series count, label cardinality, job, and last-seen timestamp from Prometheus.
 6. Results are served via a local web UI where you can explore, filter, and export Prometheus `drop` relabeling rules.
 
 ---
@@ -104,12 +104,6 @@ Each row represents one unused metric with the following columns:
 | **Labels** | Number of distinct label names across all series |
 | **Inactive for** | How long since this metric last received a sample |
 
-### Sidebar
-
-The left sidebar shows:
-- A **job filter** to narrow the table to metrics from a specific scrape job
-- Summary stats: total ghost count, total series, and selected count
-
 ### Search and sort
 
 Use the search bar to filter by metric name. Sort by any column using the pills in the top bar — click again to toggle ascending/descending.
@@ -130,21 +124,11 @@ Once you have selected the metrics you want to remove, click **Generate drop rul
 
 When combining multiple metrics into a single regex, it will make sure that just the specified unused metrics are targeted and not any additional metric with the same prefix, that is used.
 
-### The drop rule modal
-
-The modal shows:
-- A list of generated rules, each with a regex, metric count, series count, and job label
-- A YAML preview that updates live as you toggle rules on or off
-- **Select all / Deselect all** controls
-- A **Copy** button and a **Copy & close** button
-
-### Output format
-
 The generated YAML is ready to paste directly into a Prometheus `metric_relabel_configs` block:
 
 ```yaml
 - source_labels: [__name__]
-  regex: "my_unused_metric_total|another_ghost_metric"
+  regex: "unused_metric_total|another_unused_metric"
   action: drop
 ```
 
@@ -160,7 +144,7 @@ Cardamon queries the following Prometheus HTTP API endpoints:
 
 - `GET /api/v1/label/__name__/values` Fetch all metric names
 - `GET /api/v1/rules` Fetch alerting and recording rules
-- `GET /api/v1/series` Fetch series for ghost enrichment
+- `GET /api/v1/series` Fetch series for unused metric enrichment
 - `GET /api/v1/query` Fetch last-seen timestamps
 
 No write access is required.
@@ -171,6 +155,9 @@ Cardamon uses the following Grafana API endpoints:
 
 - `GET /api/search?type=dash-db` List all dashboards
 - `GET /api/dashboards/uid/:uid` Fetch dashboard JSON
+
+No write access is required.
+
 ---
 
 ## Contributing
