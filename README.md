@@ -1,4 +1,15 @@
 # Cardamon
+
+<p align="center">
+  <a href="https://snyk.io/test/github/dominikhei/cardamon/badge.svg">
+    <img src="https://snyk.io/test/github/dominikhei/cardamon/badge.svg" alt="Go Report Card" />
+  </a>
+  </a>
+  <a href="https://github.com/dominikhei/serverless-statistics/actions/workflows/ci.yml">
+    <img src="https://github.com/dominikhei/serverless-statistics/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+</p>
+
 **Cardamon** is a metric auditor for Prometheus. It identifies metrics that exist in your TSDB but are never actually queried by dashboards, alerting rules, recording rules, or any other consumer. You can then generate Prometheus drop rules to remove them and reduce storage need.
 
 ## Demo
