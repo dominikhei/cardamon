@@ -23,5 +23,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.os }}
           goarch: ${{ matrix.arch }}
+          project_path: ./cmd/cardamon
           md5sum: true
           sha256sum: true
