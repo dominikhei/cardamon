@@ -23,4 +23,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.os }}
           goarch: ${{ matrix.arch }}
-          generate_checksum: true
+          md5sum: true
+          sha256sum: true
