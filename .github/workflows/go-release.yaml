@@ -26,3 +26,6 @@ jobs:
           project_path: ./cmd/cardamon
           md5sum: true
           sha256sum: true
+          release: true  
+          upload: true
+          compress_assets: true
