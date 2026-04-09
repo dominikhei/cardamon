@@ -29,6 +29,15 @@ Any metric not found in any of those sources is flagged as unused.
 
 ---
 
+## Installing cardamon
+
+You can clone the repo and install cardamon from source or simply run:
+```bash
+go install github.com/dominikhei/cardamon/cmd/cardamon@latest
+```
+
+---
+
 ## How It Works
 
 1. Cardamon fetches all metric names from Prometheus using the label values API.
