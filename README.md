@@ -180,6 +180,12 @@ No write access is required.
 
 ---
 
+## Limitations
+
+Cardamon currently assumes a 1:1 relationship between a single Prometheus and Grafana instance. Multi-tenancy support (e.g. Mimir or Thanos with multiple tenants) is planned for a future release. All metrics found across all dashboards are treated as used, regardless of which datasource the panel queries. This means that in setups with multiple datasources, metrics from one datasource may prevent metrics in another from being flagged as unused even if nothing in that datasource actually queries them.
+
+---
+
 ## Contributing
 
 Bug reports, feature requests, and pull requests are welcome. Please open an issue first to discuss significant changes.
