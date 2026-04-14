@@ -2,6 +2,10 @@
 
 <p align="center">
   </a>
+  <a href="https://go.dev/doc/devel/release">
+    <img src="https://img.shields.io/github/go-mod/go-version/dominikhei/cardamon" alt="CI" />
+  </a>
+  </a>
   <a href="https://github.com/dominikhei/serverless-statistics/actions/workflows/ci.yml">
     <img src="https://github.com/dominikhei/serverless-statistics/actions/workflows/ci.yml/badge.svg" alt="CI" />
   </a>
