@@ -64,7 +64,7 @@ prometheus:
   password: ""
 
 grafana:
-  url: "http://localhost:3000"
+  address: "http://localhost:3000"
   path_prefix: ""                        # Set if Grafana is served under a subpath, e.g. /grafana
                                          # If no auth is configured leave this blank
   token: ""                              # Token based auth, takes precedence over password auth if both are set
