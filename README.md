@@ -81,7 +81,7 @@ audit:
     - "process_"
     - "scrape_"
 
-server:
+dashboard:
   port: 8080                             # On which port to serve the dashboard
 ```
 **The following keys are required:**
