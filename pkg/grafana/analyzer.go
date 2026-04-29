@@ -15,6 +15,7 @@
 package grafana
 
 import (
+	"context"
 	"regexp"
 	"sync"
 )
@@ -32,8 +33,8 @@ func NewAnalyzer(client *Client) *Analyzer {
 }
 
 // DiscoverUsedMetrics crawls all dashboards and returns a unique set of metric names found.
-func (a *Analyzer) DiscoverUsedMetrics() ([]string, error) {
-	dashboards, err := a.client.SearchDashboards()
+func (a *Analyzer) DiscoverUsedMetrics(ctx context.Context) ([]string, error) {
+	dashboards, err := a.client.SearchDashboards(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +45,14 @@ func (a *Analyzer) DiscoverUsedMetrics() ([]string, error) {
 	sem := make(chan struct{}, 10)
 
 	for _, dash := range dashboards {
+		// The Semaphore limits the amount of goroutines that can be created and thus also the API calls
+		sem <- struct{}{}
 		wg.Add(1)
 		go func(d DashboardMetadata) {
 			defer wg.Done()
-			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			rawJSON, err := a.client.GetDashboardModel(d.UID)
+			rawJSON, err := a.client.GetDashboardModel(ctx, d.UID)
 			if err != nil {
 				return
 			}
