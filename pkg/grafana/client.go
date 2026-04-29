@@ -15,6 +15,7 @@
 package grafana
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -48,8 +49,8 @@ func NewClient(url, pathPrefix string, token string, username string, password s
 }
 
 // newRequest is used to make a request to the Grafana instance, based on the params in the client struct.
-func (c *Client) newRequest(method, path string) (*http.Request, error) {
-	req, err := http.NewRequest(method, c.URL+c.PathPrefix+path, nil)
+func (c *Client) newRequest(ctx context.Context, method, path string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, c.URL+c.PathPrefix+path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +64,8 @@ func (c *Client) newRequest(method, path string) (*http.Request, error) {
 }
 
 // SearchDashboards finds all dashboard UIDs.
-func (c *Client) SearchDashboards() ([]DashboardMetadata, error) {
-	req, err := c.newRequest("GET", "/api/search?type=dash-db")
+func (c *Client) SearchDashboards(ctx context.Context) ([]DashboardMetadata, error) {
+	req, err := c.newRequest(ctx, "GET", "/api/search?type=dash-db")
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +84,8 @@ func (c *Client) SearchDashboards() ([]DashboardMetadata, error) {
 }
 
 // GetDashboardModel fetches the raw JSON of a dashboard based on a UID.
-func (c *Client) GetDashboardModel(uid string) ([]byte, error) {
-	req, err := c.newRequest("GET", "/api/dashboards/uid/"+uid)
+func (c *Client) GetDashboardModel(ctx context.Context, uid string) ([]byte, error) {
+	req, err := c.newRequest(ctx, "GET", "/api/dashboards/uid/"+uid)
 	if err != nil {
 		return nil, err
 	}

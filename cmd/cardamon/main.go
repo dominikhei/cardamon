@@ -45,9 +45,6 @@ func main() {
 		log.Fatalf("Failed to initialize Prometheus client: %v", err)
 	}
 	promAnalyzer := prom.NewAnalyzer(promClient)
-	if err != nil {
-		log.Fatalf("Failed to initialize Prometeheus analyzer: %v", err)
-	}
 	grafanaClient := grafana.NewClient(cfg.Grafana.Address, cfg.Grafana.PathPrefix, cfg.Grafana.Token, cfg.Grafana.Username, cfg.Grafana.Password)
 	grafanaAnalyzer := grafana.NewAnalyzer(grafanaClient)
 
@@ -58,7 +55,7 @@ func main() {
 		log.Fatalf("Error fetching all metric names from Prometheus: %v", err)
 	}
 
-	grafanaUsed, err := grafanaAnalyzer.DiscoverUsedMetrics()
+	grafanaUsed, err := grafanaAnalyzer.DiscoverUsedMetrics(ctx)
 	if err != nil {
 		fmt.Printf("Warning: Creawling Grafana failed: %v\n", err)
 	}
