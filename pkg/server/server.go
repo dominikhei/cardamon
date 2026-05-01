@@ -19,8 +19,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/dominikhei/cardamon/pkg/droprules"
+	"github.com/dominikhei/cardamon/pkg/prom"
 )
 
 // Server provides an HTTP interface to inspect unused ("ghost") metrics
@@ -29,7 +29,7 @@ import (
 // It serves a simple dashboard UI and JSON APIs for retrieving ghost
 // metrics and computing Prometheus drop rules grouped by job.
 type Server struct {
-	ghosts []audit.MetricReport
+	ghosts []prom.MetricReport
 	mux    *http.ServeMux
 }
 
@@ -42,7 +42,7 @@ type Server struct {
 //     generated drop rules grouped by job
 //
 // The provided ghosts slice is used as the data source for all endpoints.
-func New(ghosts []audit.MetricReport) *Server {
+func New(ghosts []prom.MetricReport) *Server {
 	mux := http.NewServeMux()
 	s := &Server{
 		ghosts: ghosts,

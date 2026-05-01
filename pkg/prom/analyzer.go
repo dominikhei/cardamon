@@ -28,7 +28,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/prometheus/common/model"
 )
 
@@ -184,12 +183,21 @@ func (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []s
 	return filtered
 }
 
+// MetricReport contains all relevant data for a metric that is required in the dashboard
+type MetricReport struct {
+	Name             string `json:"name"`
+	Job              string `json:"job"`
+	SeriesCount      int    `json:"series_count"`
+	LabelCount       int    `json:"label_count"`
+	InactiveDuration string `json:"inactive_duration"`
+}
+
 // GetGhostStats calculates general statistics, like the series count, label count and when it was last scraped.
-func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.MetricReport, error) {
+func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]MetricReport, error) {
 	endTime := time.Now()
 	startTime := endTime.Add(-24 * time.Hour)
 
-	reports := make([]audit.MetricReport, len(ghosts))
+	reports := make([]MetricReport, len(ghosts))
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 10)
 
@@ -200,7 +208,7 @@ func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			report := audit.MetricReport{Name: name}
+			report := MetricReport{Name: name}
 
 			series, _, err := a.client.api.Series(ctx, []string{name}, startTime, endTime)
 			if err == nil {

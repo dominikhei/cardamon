@@ -21,7 +21,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/dominikhei/cardamon/pkg/config"
 	"github.com/dominikhei/cardamon/pkg/engine"
 	"github.com/dominikhei/cardamon/pkg/grafana"
@@ -83,9 +82,9 @@ func main() {
 		log.Fatalf("Failed to fetch ghost stats: %v", err)
 	}
 
-	apiGhosts := make([]audit.MetricReport, 0, len(ghostReports))
+	apiGhosts := make([]prom.MetricReport, 0, len(ghostReports))
 	for _, g := range ghostReports {
-		apiGhosts = append(apiGhosts, audit.MetricReport{
+		apiGhosts = append(apiGhosts, prom.MetricReport{
 			Name:             g.Name,
 			Job:              g.Job,
 			SeriesCount:      g.SeriesCount,
