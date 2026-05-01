@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/dominikhei/cardamon/pkg/config"
 	"github.com/dominikhei/cardamon/pkg/engine"
@@ -47,7 +49,8 @@ func main() {
 	grafanaClient := grafana.NewClient(cfg.Grafana.Address, cfg.Grafana.PathPrefix, cfg.Grafana.Token, cfg.Grafana.Username, cfg.Grafana.Password)
 	grafanaAnalyzer := grafana.NewAnalyzer(grafanaClient)
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	allMetrics, err := promAnalyzer.GetAllMetricNames(ctx)
 	if err != nil {
