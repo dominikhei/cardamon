@@ -97,6 +97,6 @@ func main() {
 	}
 	addr := fmt.Sprintf(":%d", cfg.Dashboard.Port)
 	srv := server.New(apiGhosts)
-	log.Fatal(srv.ListenAndServe(addr))
+	log.Fatal(srv.ListenAndServe(ctx, addr))
 
 }

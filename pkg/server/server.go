@@ -15,6 +15,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -110,7 +111,19 @@ func New(ghosts []prom.MetricReport) *Server {
 	return s
 }
 
-func (s *Server) ListenAndServe(addr string) error {
+func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
+	srv := &http.Server{Addr: addr, Handler: s.mux}
+
+	go func() {
+		<-ctx.Done()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("Server Shutdown: %v", err)
+		}
+	}()
+
 	log.Printf("dashboard: http://localhost%v/\n", addr)
-	return http.ListenAndServe(addr, s.mux)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+	return nil
 }
