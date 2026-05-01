@@ -15,12 +15,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/dominikhei/cardamon/pkg/droprules"
+	"github.com/dominikhei/cardamon/pkg/prom"
 )
 
 // Server provides an HTTP interface to inspect unused ("ghost") metrics
@@ -29,7 +30,7 @@ import (
 // It serves a simple dashboard UI and JSON APIs for retrieving ghost
 // metrics and computing Prometheus drop rules grouped by job.
 type Server struct {
-	ghosts []audit.MetricReport
+	ghosts []prom.MetricReport
 	mux    *http.ServeMux
 }
 
@@ -42,7 +43,7 @@ type Server struct {
 //     generated drop rules grouped by job
 //
 // The provided ghosts slice is used as the data source for all endpoints.
-func New(ghosts []audit.MetricReport) *Server {
+func New(ghosts []prom.MetricReport) *Server {
 	mux := http.NewServeMux()
 	s := &Server{
 		ghosts: ghosts,
@@ -110,7 +111,19 @@ func New(ghosts []audit.MetricReport) *Server {
 	return s
 }
 
-func (s *Server) ListenAndServe(addr string) error {
+func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
+	srv := &http.Server{Addr: addr, Handler: s.mux}
+
+	go func() {
+		<-ctx.Done()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Printf("Server Shutdown: %v", err)
+		}
+	}()
+
 	log.Printf("dashboard: http://localhost%v/\n", addr)
-	return http.ListenAndServe(addr, s.mux)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		return err
+	}
+	return nil
 }

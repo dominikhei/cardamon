@@ -20,8 +20,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/dominikhei/cardamon/pkg/config"
 	"github.com/dominikhei/cardamon/pkg/engine"
 	"github.com/dominikhei/cardamon/pkg/grafana"
@@ -48,7 +49,8 @@ func main() {
 	grafanaClient := grafana.NewClient(cfg.Grafana.Address, cfg.Grafana.PathPrefix, cfg.Grafana.Token, cfg.Grafana.Username, cfg.Grafana.Password)
 	grafanaAnalyzer := grafana.NewAnalyzer(grafanaClient)
 
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	allMetrics, err := promAnalyzer.GetAllMetricNames(ctx)
 	if err != nil {
@@ -83,9 +85,9 @@ func main() {
 		log.Fatalf("Failed to fetch ghost stats: %v", err)
 	}
 
-	apiGhosts := make([]audit.MetricReport, 0, len(ghostReports))
+	apiGhosts := make([]prom.MetricReport, 0, len(ghostReports))
 	for _, g := range ghostReports {
-		apiGhosts = append(apiGhosts, audit.MetricReport{
+		apiGhosts = append(apiGhosts, prom.MetricReport{
 			Name:             g.Name,
 			Job:              g.Job,
 			SeriesCount:      g.SeriesCount,
@@ -95,6 +97,6 @@ func main() {
 	}
 	addr := fmt.Sprintf(":%d", cfg.Dashboard.Port)
 	srv := server.New(apiGhosts)
-	log.Fatal(srv.ListenAndServe(addr))
+	log.Fatal(srv.ListenAndServe(ctx, addr))
 
 }

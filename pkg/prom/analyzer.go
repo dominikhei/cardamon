@@ -15,20 +15,13 @@
 package prom
 
 import (
-	"bufio"
-	"compress/gzip"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/dominikhei/cardamon/pkg/audit"
 	"github.com/prometheus/common/model"
 )
 
@@ -85,87 +78,6 @@ func (a *Analyzer) GetMetricsInRules(ctx context.Context) (map[string]bool, erro
 	return usedInRules, nil
 }
 
-// QueryLogEntry contains a query from the query log.
-type QueryLogEntry struct {
-	Time   time.Time `json:"time"`
-	Params struct {
-		Query string `json:"query"`
-	} `json:"params"`
-}
-
-func (a *Analyzer) DiscoverUsedMetricsFromLogs(logDir string, days int) (map[string]bool, error) {
-	usedInLogs := make(map[string]bool)
-	cutoff := time.Now().AddDate(0, 0, -days)
-
-	files, err := os.ReadDir(logDir)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, file := range files {
-		name := file.Name()
-		if !strings.HasSuffix(name, ".log") && !strings.HasSuffix(name, ".log.gz") {
-			continue
-		}
-
-		info, err := file.Info()
-		if err != nil {
-			continue
-		}
-
-		// Skip rotated files that are entirely too old
-		if info.ModTime().Before(cutoff) {
-			continue
-		}
-
-		path := filepath.Join(logDir, name)
-		if err = a.parseLogFile(path, usedInLogs, cutoff); err != nil {
-			continue
-		}
-	}
-
-	return usedInLogs, nil
-}
-
-// parseLogFile scans a logFile for all expressions that are potentially metrics.
-// It breaks early once it hits entries older than the cutoff.
-func (a *Analyzer) parseLogFile(path string, found map[string]bool, cutoff time.Time) error {
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close() //nolint:errcheck
-
-	var reader io.Reader = f
-	if strings.HasSuffix(path, ".gz") {
-		gz, err := gzip.NewReader(f)
-		if err != nil {
-			return err
-		}
-		defer gz.Close() //nolint:errcheck
-		reader = gz
-	}
-
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		var entry QueryLogEntry
-		if err := json.Unmarshal(scanner.Bytes(), &entry); err != nil {
-			continue
-		}
-
-		if entry.Time.Before(cutoff) {
-			break
-		}
-
-		matches := MetricRegex.FindAllString(entry.Params.Query, -1)
-		for _, m := range matches {
-			found[m] = true
-		}
-	}
-
-	return scanner.Err()
-}
-
 // FilterMetrics filters metrics based on an exclusion list.
 func (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []string {
 	var filtered []string
@@ -184,12 +96,21 @@ func (a *Analyzer) FilterMetrics(metrics []string, excludePrefixes []string) []s
 	return filtered
 }
 
+// MetricReport contains all relevant data for a metric that is required in the dashboard
+type MetricReport struct {
+	Name             string `json:"name"`
+	Job              string `json:"job"`
+	SeriesCount      int    `json:"series_count"`
+	LabelCount       int    `json:"label_count"`
+	InactiveDuration string `json:"inactive_duration"`
+}
+
 // GetGhostStats calculates general statistics, like the series count, label count and when it was last scraped.
-func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.MetricReport, error) {
+func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]MetricReport, error) {
 	endTime := time.Now()
 	startTime := endTime.Add(-24 * time.Hour)
 
-	reports := make([]audit.MetricReport, len(ghosts))
+	reports := make([]MetricReport, len(ghosts))
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 10)
 
@@ -200,7 +121,7 @@ func (a *Analyzer) GetGhostStats(ctx context.Context, ghosts []string) ([]audit.
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
-			report := audit.MetricReport{Name: name}
+			report := MetricReport{Name: name}
 
 			series, _, err := a.client.api.Series(ctx, []string{name}, startTime, endTime)
 			if err == nil {
