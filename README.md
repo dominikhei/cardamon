@@ -11,7 +11,7 @@
   </a>
 </p>
 
-**Cardamon** is a metric auditor for Prometheus. It identifies metrics that exist in your TSDB but are never actually queried by dashboards, alerting rules, recording rules, or any other consumer. The idea is to generate insight into that not to blindly drop all metrics as they might be valuable during an incident. 
+**Cardamon** is a metric auditor for Prometheus. It identifies metrics that exist in your TSDB but are never actually queried by dashboards, alerting rules, recording rules, or any other consumer. The idea is to generate insight into that not to blindly drop all metrics as they might be valuable during an incident.
 
 ## Demo
 ![](./media/cardamon_demo.gif)
@@ -58,6 +58,7 @@ Cardamon is configured via a YAML file. Pass the path with `--config`.
 prometheus:
   address: "http://localhost:9090"
   path_prefix: ""                        # Set if Prometheus is served under a subpath, e.g. /prometheus
+  tenant_id: ""                          # Optional, sent as the X-Scope-OrgID header, e.g. for Mimir
                                          # If no auth is configured leave this blank
   token: ""                              # Token based auth, takes precedence over password auth if both are set
   username: ""                           # Basic auth / LDAP fallback
@@ -96,6 +97,24 @@ You have to copy those files to your instance or start cardamon inside the Prome
 They [need to be enabled](https://prometheus.io/docs/guides/query-log/), e.g via your values.yaml.
 
 > **Note:** Cardamon handles both active `.log` files and rotated `.log.gz` files. It reads log entries in order and stops early once it reaches entries older than `lookback_days`, so scanning is efficient even on large logs.
+
+### Using cardamon with Grafana Mimir
+
+Mimir serves the Prometheus HTTP API under a prefix (`/prometheus` by default) and reads the tenant from the `X-Scope-OrgID` header. Set `path_prefix` to that prefix and `tenant_id` to the tenant you want to audit:
+
+```yaml
+prometheus:
+  address: "http://mimir.example.com"    # Mimir gateway, or Mimir in monolithic mode
+  path_prefix: "/prometheus"
+  tenant_id: "team-a"
+```
+
+- One run audits one tenant. To audit several tenants, run cardamon once per tenant.
+- Federated tenant IDs such as `team-a|team-b` are not supported. Mimir's rules endpoint accepts a single tenant only, so the rules call would fail.
+- If multi-tenancy is disabled in Mimir, leave `tenant_id` blank.
+- Rules are read from `<path_prefix>/api/v1/rules`. Mimir serves that path from the ruler, not the query-frontend, so `address` has to route it to the ruler. If the rules call fails, cardamon only prints a warning, and metrics used only in rules will show up as unused.
+- The query log source reads the Prometheus query log format and has not been tested with Mimir. Without it, only dashboards and rules count as usage, so more metrics may be flagged as unused.
+- Grafana dashboards are not matched to tenants yet, see [Limitations](#limitations).
 
 ---
 
@@ -183,7 +202,7 @@ No write access is required.
 
 ## Limitations
 
-Cardamon currently assumes a 1:1 relationship between a single Prometheus and Grafana instance. Multi-tenancy support (e.g. Mimir or Thanos with multiple tenants) is planned for a future release. All metrics found across all dashboards are treated as used, regardless of which datasource the panel queries. This means that in setups with multiple datasources, metrics from one datasource may prevent metrics in another from being flagged as unused even if nothing in that datasource actually queries them.
+Cardamon currently assumes a 1:1 relationship between a single Prometheus and Grafana instance. For Mimir, one run audits a single tenant (see [Using cardamon with Grafana Mimir](#using-cardamon-with-grafana-mimir)). Matching dashboards to tenants and Thanos multi-tenancy are not supported yet. All metrics found across all dashboards are treated as used, regardless of which datasource the panel queries. This means that in setups with multiple datasources, metrics from one datasource may prevent metrics in another from being flagged as unused even if nothing in that datasource actually queries them.
 
 ---
 

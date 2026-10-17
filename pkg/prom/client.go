@@ -29,6 +29,7 @@ type roundTripper struct {
 	token    string
 	username string
 	password string
+	tenantID string
 	base     http.RoundTripper
 }
 
@@ -39,16 +40,21 @@ func (rt *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	} else if rt.username != "" {
 		r.SetBasicAuth(rt.username, rt.password)
 	}
+	// Multi-tenant backends such as Grafana Mimir read the tenant from this header.
+	if rt.tenantID != "" {
+		r.Header.Set("X-Scope-OrgID", rt.tenantID)
+	}
 	return rt.base.RoundTrip(r)
 }
 
-func NewClient(address, token, username, password string) (*Client, error) {
+func NewClient(address, token, username, password, tenantID string) (*Client, error) {
 	c, err := api.NewClient(api.Config{
 		Address: address,
 		RoundTripper: &roundTripper{
 			token:    token,
 			username: username,
 			password: password,
+			tenantID: tenantID,
 			base:     api.DefaultRoundTripper,
 		},
 	})

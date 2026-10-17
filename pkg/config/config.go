@@ -29,6 +29,7 @@ type Config struct {
 		Token      string `yaml:"token"`
 		Username   string `yaml:"username"`
 		Password   string `yaml:"password"`
+		TenantID   string `yaml:"tenant_id"`
 	} `yaml:"prometheus"`
 
 	Storage struct {
